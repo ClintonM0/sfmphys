@@ -2,6 +2,24 @@ import socket
 import math
 import sys
 
+unitsPerMeter = 53.33
+
+def UnitsToMeters(vec):
+	ret = vec;
+	for i in range(len(ret)):
+		ret[i] /= unitsPerMeter
+	
+	return ret
+#end
+
+def MetersToUnits(vec):
+	ret = vec;
+	for i in range(len(ret)):
+		ret[i] *= unitsPerMeter
+	
+	return ret
+#end
+
 def EulerToQuaternion(angles):
 	cosx = math.cos(angles[0]/2)
 	cosy = math.cos(angles[1]/2)

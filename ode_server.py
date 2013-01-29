@@ -18,21 +18,27 @@ contacts = ode.JointGroup()
 
 floor = ode.GeomPlane(space, (0,0,1), 0)
 
-def addObject(name, pos, rot, geomtype, geomsize, isStatic):
+def addObject(name, pos, rot, boxmin, boxmax, isStatic):
+	boxsize = [boxmax[0]-boxmin[0], boxmax[1]-boxmin[1], boxmax[2]-boxmin[2]]
+	center = [(boxmin[0]+boxmax[0])/2.0,
+				(boxmin[1]+boxmax[1])/2.0,
+				(boxmin[2]+boxmax[2])/2.0]
+	#TODO: what to do with center?
 	#TODO: consider different geomtypes here
-	g = ode.GeomBox(space, lengths = geomsize)
+	g = ode.GeomBox(space, lengths = boxsize)
 	#g.setCollideBits(0x1)
 	
 	if (not isStatic):
 		b = ode.Body(world)
 		m = ode.Mass()
-		m.setBox(1, geomsize[0], geomsize[1], geomsize[2])
+		m.setBox(1, boxsize[0], boxsize[1], boxsize[2])
 		b.setMass(m)
 		g.setBody(b)
 		bodies.update({name: b})
 	
 	g.setPosition(pos)
 	g.setQuaternion(rot)
+	
 	geoms.update({name: g})
 #end
 
@@ -40,6 +46,15 @@ def removeObject(name):
 	space.remove(geom[name])
 	del geom[name]
 	del body[name]
+#end
+
+def listObjects(type):
+	if (type == "geoms"):
+		return ' '.join(geoms.keys())
+	elif (type == "bodies"):
+		return ' '.join(bodies.keys())
+	
+	return ""
 #end
 
 def near_callback(args, geom1, geom2):
@@ -73,7 +88,7 @@ def getobj(objname):
 		return "ERROR"
 	
 	ret = VecToString(g.getPosition()) + " " + VecToString(g.getQuaternion())
-	print "getobj: ", ret
+	#print "getobj: ", ret
 	return ret
 #end
 
@@ -89,19 +104,22 @@ while 1:
 	data = rec.split()
 	
 	try:
-		if (data[0] == "add"): #add objname pos rot geomtype geomsize static
+		if (data[0] == "add"): #add objname pos rot boxmin boxmax static
 			name = data[1]
 			pos = StringToVec(data[2])
 			rot = StringToVec(data[3])
-			geomtype = data[4]
-			geomsize = StringToVec(data[5])
+			boxmin = StringToVec(data[4])
+			boxmax = StringToVec(data[5])
 			static = int(data[6])
-			addObject(name, pos, rot, geomtype, geomsize, static)
+			addObject(name, pos, rot, boxmin, boxmax, static)
 			conn.send("ok")
 		elif (data[0] == "remove"): #remove objname
 			objname = data[1]
 			removeObject(objname)
 			conn.send("ok")
+		elif (data[0] == "list"): #list type [geoms / bodies]
+			type = data[1]
+			conn.send("ok "+listObjects(type))
 		elif (data[0] == "step"): #step time
 			t = float(data[1])
 			step(t)
@@ -109,9 +127,9 @@ while 1:
 		elif (data[0] == "getobj"): #getobj objname
 			objname = data[1]
 			conn.send("ok " + getobj(objname))
-		elif (data[0] == "end"):
+		elif (data[0] == "end"): #end
 			conn = None
-		elif (data[0] == "halt"):
+		elif (data[0] == "halt"): #halt
 			break
 		else:
 			conn.send("ERROR Unknown Command")
@@ -121,6 +139,7 @@ while 1:
 		print "ERROR " + str(e)
 		conn.send("ERROR " + str(e))
 	#end try
+	
 #end while
 
 conn.close()

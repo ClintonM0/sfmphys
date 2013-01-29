@@ -43,3 +43,10 @@ def waitForClient(s):
 	print 'Connected by', addr
 	return conn, addr
 #end
+
+def request(s, str):
+	s.send(str)
+	response = s.recv(1024)
+	print "response: ", response
+	return response
+#end
