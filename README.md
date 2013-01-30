@@ -26,7 +26,9 @@
   "sfm.exe" and "ode_server_start.bat" will be in the same folder.
 
 ### How to use
-* Start sfm, and set up your scene. Position physics objects, animate kinematic objects, etc.
+* Start sfm, and set up your scene. Position physics objects, animate kinematic objects, etc. (Also, in this version,
+  you must ensure that the RootTransform node is in the center of the model. Move the static_prop or other bones around
+  if your models need adjustment.)
 * Select a period of time to simulate over in the motion editor (ie, with the floating modification layer).
   ***THIS IS A CRUCIAL STEP.*** The simulation goes over the entire range of your time selection so if you leave it
   at the default (infinite in either direction) SFM will probably crash (at the very least, the simulation will run for a very long time).
