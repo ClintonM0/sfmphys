@@ -11,6 +11,7 @@
       For example, there are some nice big wall segments in the Portal 2 files for large flat areas or walls.
 * Use .mdl or collision meshes
     * Only the bounding boxes are used for simulation. Support for capsules and spheres will be added at a later date.
+    * Also, the code currently assumes the root node is in the center of the model. This will be fixed soon.
     * Loading from .mdl probably isn't going to happen. Loading from .smd or other formats might, but not for a while.
 * Ragdolls, springs, cloth, etc.
     * These will (hopefully) be in a later release
