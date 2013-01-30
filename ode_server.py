@@ -11,14 +11,14 @@ bodies = {}
 world = ode.World()
 world.setGravity([0,0,-9.8])
 world.setERP(0.8)
-world.setCFM(1E-8)
+world.setCFM(1E-5)
 
 space = ode.Space()
 contacts = ode.JointGroup()
 
-floor = ode.GeomPlane(space, (0,0,1), 0)
+#floor = ode.GeomPlane(space, (0,0,1), 0)
 
-def addObject(name, pos, rot, boxmin, boxmax, isStatic):
+def addObject(name, pos, rot, boxmin, boxmax, isStatic, isKinematic):
 	boxsize = [boxmax[0]-boxmin[0], boxmax[1]-boxmin[1], boxmax[2]-boxmin[2]]
 	center = [(boxmin[0]+boxmax[0])/2.0,
 				(boxmin[1]+boxmax[1])/2.0,
@@ -34,10 +34,12 @@ def addObject(name, pos, rot, boxmin, boxmax, isStatic):
 		m.setBox(1, boxsize[0], boxsize[1], boxsize[2])
 		b.setMass(m)
 		g.setBody(b)
+		if (isKinematic):
+			b.setKinematic()
 		bodies.update({name: b})
 	
 	g.setPosition(pos)
-	g.setQuaternion(rot)
+	g.setRotation(rot)
 	
 	geoms.update({name: g})
 #end
@@ -48,11 +50,34 @@ def removeObject(name):
 	del body[name]
 #end
 
+def objectForce(name, force):
+	bodies[name].addForce(force)
+
+def objectVelocity(name, velocity):
+	bodies[name].setLinearVel(velocity)
+
 def listObjects(type):
 	if (type == "geoms"):
 		return ' '.join(geoms.keys())
 	elif (type == "bodies"):
 		return ' '.join(bodies.keys())
+	elif (type == "kinematicbodies"):
+		ret = ''
+		for i in bodies.iteritems():
+			if (i[1].isKinematic()):
+				ret += i[0] + ' '
+			#end if
+		#end for
+		return ret.strip()
+	elif (type == "physbodies"):
+		ret = ''
+		for i in bodies.iteritems():
+			if (not i[1].isKinematic()):
+				ret += i[0] + ' '
+			#end if
+		#end for
+		return ret.strip()
+	#end if
 	
 	return ""
 #end
@@ -71,7 +96,7 @@ def near_callback(args, geom1, geom2):
 #end
 
 def step(t):
-	iterations = 4
+	iterations = 12
 	for i in range(iterations):
 		space.collide(None, near_callback)
 		world.step(t/iterations)
@@ -87,7 +112,7 @@ def getobj(objname):
 	except KeyError:
 		return "ERROR"
 	
-	ret = VecToString(g.getPosition()) + " " + VecToString(g.getQuaternion())
+	ret = VecToString(g.getPosition()) + " " + VecToString(g.getRotation())
 	#print "getobj: ", ret
 	return ret
 #end
@@ -104,18 +129,29 @@ while 1:
 	data = rec.split()
 	
 	try:
-		if (data[0] == "add"): #add objname pos rot boxmin boxmax static
+		if (data[0] == "add"): #add objname pos rot boxmin boxmax static kinematic
 			name = data[1]
 			pos = StringToVec(data[2])
 			rot = StringToVec(data[3])
 			boxmin = StringToVec(data[4])
 			boxmax = StringToVec(data[5])
 			static = int(data[6])
-			addObject(name, pos, rot, boxmin, boxmax, static)
+			kinematic = int(data[7])
+			addObject(name, pos, rot, boxmin, boxmax, static, kinematic)
 			conn.send("ok")
 		elif (data[0] == "remove"): #remove objname
 			objname = data[1]
 			removeObject(objname)
+			conn.send("ok")
+		elif (data[0] == "force"): #force objname vector
+			objname = data[1]
+			vec = StringToVec(data[2])
+			objectForce(objname, vec)
+			conn.send("ok")
+		elif (data[0] == "velocity"): #velocity objname vector
+			objname = data[1]
+			vec = StringToVec(data[2])
+			objectVelocity(objname, vec)
 			conn.send("ok")
 		elif (data[0] == "list"): #list type [geoms / bodies]
 			type = data[1]

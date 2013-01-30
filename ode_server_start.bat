@@ -1,1 +1,1 @@
-python ode_server.py
+sdktools\python\2.6\win32\python.exe ode_server.py
