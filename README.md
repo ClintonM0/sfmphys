@@ -37,7 +37,7 @@
     - Right-click the animation set and select from the rigs menu:
         * "phys_obj_add" for physics-controlled objects
         * "phys_obj_add_static" for non-moving, colliding objects (this may be removed in favor of phys_obj_kinematic)
-        * "phys_obj_kinematic" for hand-animated, colliding objects (this can also be used for static objects)
+        * "phys_obj_add_kinematic" for hand-animated, colliding objects (this can also be used for static objects)
 * Once you have added every object, right-click any animation set and select "phys_simulate" from the rigs menu.
   The simulation might take a few seconds. If SFM doesn't respond immediately just be patient.
 * It doesn't matter in which order you add objects
