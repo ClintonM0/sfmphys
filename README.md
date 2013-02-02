@@ -31,6 +31,7 @@ Bullet release note: You can remove any files from the previous ode-based releas
 * The "shape" control works as follows: if value < 0.5 (slider on the left half), "box" is selected; if value > 0.5 (slider on the right half), "sphere" is selected.
 * The "kinematic" control is "dynamic" for values < 0.5; "kinematic" for values > 0.5.
 * The "center of mass" control currently does not function properly, and the "force" control will need some tweaking to be more useful (note that you can also rotate the "force" control to apply torque to an object).
+* The RootTransform of each object must be at its center. This should be fixed in a later release.
 * Select a period of time to simulate over in the motion editor (ie, with the floating modification layer). The simulation will not run if the time selection is infinite in either direction.
 * Once the scene is set up, right-click any animation set and run "phys_simulate". The simulation might take a few seconds. If SFM doesn't respond immediately just be patient.
 * To run a simulation again, just run "phys_simulate" again. There's no need to re-rig objects or to restart the server (the sim is reset automatically every time "phys_simulate" runs).
@@ -38,7 +39,7 @@ Bullet release note: You can remove any files from the previous ode-based releas
 ### Videos
 Day 1 http://www.youtube.com/watch?v=LDMB95El9GA  
 Day 2 http://www.youtube.com/watch?v=a99sJrXWOxo  
-Day 3 http://www.youtube.com/watch?v=GtQ50YWORcA
+Day 3 http://www.youtube.com/watch?v=GtQ50YWORcA  
 Day 5 http://www.youtube.com/watch?v=vyzgnJhkdeQ
 
 This project uses the bullet physics library. Check out http://bulletphysics.org for more info.
