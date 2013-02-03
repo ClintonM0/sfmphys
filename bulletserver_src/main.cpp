@@ -58,6 +58,8 @@ int main(int argc, char** argv) {
     std::cout << "server open on port 52600" << std::endl;
     std::cout << "Ready." << std::endl;
 
+    float elapsed_time = 0;
+
     SOCKET client = INVALID_SOCKET;
     char buf[SOCKET_BUFSIZE+1];
     while (1) {
@@ -73,7 +75,7 @@ int main(int argc, char** argv) {
         }
 
         buf[bytes] = '\0';
-        cout << "in: " << buf << endl;
+        //cout << "in: " << buf << endl;
         std::vector<std::string> args;
         boost::split(args, buf, boost::is_space());
 
@@ -137,6 +139,9 @@ int main(int argc, char** argv) {
             float dt = toFloat(args[1]);
             dynamicsWorld->stepSimulation(dt, 100, 1.0/100.0);
             result = "ok";
+            elapsed_time += dt;
+
+            std::cout << "Elapsed time: " << elapsed_time << std::endl;
         }
         else if (args[0] == "reset") {
             delete dynamicsWorld;
@@ -154,6 +159,8 @@ int main(int argc, char** argv) {
             dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,broadphase,solver,collisionConfiguration);
             dynamicsWorld->setGravity(btVector3(0,0,-10));
             result = "ok";
+
+            elapsed_time = 0;
         }
         else if (args[0] == "end") {
             closesocket(client);
@@ -169,7 +176,7 @@ int main(int argc, char** argv) {
             result = "ERROR: unrecognized command";
         }
 
-        cout << "out: " << result << endl;
+        //cout << "out: " << result << endl;
         send(client, result.c_str(), result.size(), 0);
     }
 
