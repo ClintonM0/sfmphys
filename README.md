@@ -1,4 +1,5 @@
-Bullet release note: You can remove any files from the previous ode-based release. All of them were either renamed, removed, or replaced in this version.
+Bullet release note: It is recommended you delete the *rig_obj_add** scripts from the previous version to avoid confusion, as these are no longer used. Refer to the "How to Use" section for more information.
+Go ahead and delete the ode_server files as well - these have been replaced by bullet_server.
 
 #SFM Physics Scripts
 ### What does this do?
