@@ -1,5 +1,5 @@
 Bullet release note: It is recommended you delete the *rig_obj_add** scripts from the previous version to avoid confusion, as these are no longer used. Refer to the "How to Use" section for more information.
-Go ahead and delete the ode_server files as well - these have been replaced by bullet_server.
+Go ahead and delete the ode_server files as well - it has been replaced by bulletserver.exe.
 
 #SFM Physics Scripts
 ### What does this do?
