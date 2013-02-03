@@ -41,7 +41,7 @@ Go ahead and delete the ode_server files as well - it has been replaced by bulle
 Day 1 http://www.youtube.com/watch?v=LDMB95El9GA  
 Day 2 http://www.youtube.com/watch?v=a99sJrXWOxo  
 Day 3 http://www.youtube.com/watch?v=GtQ50YWORcA  
-Day 5 http://www.youtube.com/watch?v=vyzgnJhkdeQ
+Day 5 http://www.youtube.com/watch?v=vyzgnJhkdeQ  
 Day 5.5 http://www.youtube.com/watch?v=AyKmftF3ZX0
 
 This project uses the bullet physics library. Check out http://bulletphysics.org for more info.
