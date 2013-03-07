@@ -133,7 +133,7 @@ Object *createObject(const std::string& name, const btVector3& pos,
     obj->body->setRestitution(bounce);
     obj->body->setFriction(friction * 100);
     obj->body->setCenterOfMassTransform(btTransform(quat, pos + center));
-    obj->body->setDamping(0.3, 0.6);
+    obj->body->setDamping(0.05, 0.1);
 
     //add to store and return
     ObjectMap::iterator iter = objects.insert(std::make_pair(name, obj)).first;
