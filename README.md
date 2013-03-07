@@ -39,6 +39,7 @@ Go ahead and delete the ode_server files as well - it has been replaced by bulle
 * The hwm engineer and scout have some issues as they have body parts not connected to the rest of the model (engineer apparently has no pelvis hitbox, and scout's pack moves freely).
 * If parts of a model appear disconnected, you can manually edit the joints. Open the animation set in the element viewer and browse to RootControlGroup -> children -> Physics -> children -> body (bone name). There you can change the "ParentName" attribute appropriately. You can also change the "max twist" and "box size" attributes if necessary for fine tuning.
 * Animation with ragdolls is difficult since you have to use the physics handles. I'll add an option to use the model's normal bones for fully-kinematic objects in the future.
+* Ropes use the positions of bones at the start of the time selection to determine how joints should line up. So for the best results, leave the model in its default position (ie, t-pose for ragdolls, straight line for ropes) and then animate any kinematic bones into position before the scene starts and give the sim a second to stabilize.
 
 ### Videos
 Day 1 http://www.youtube.com/watch?v=LDMB95El9GA  
