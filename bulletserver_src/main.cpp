@@ -17,10 +17,13 @@
  * step [dt]
  * add [name] [pos] [rot] [kinematic] [shape] [shape size]
  *          [center of mass] [friction] [bounce] [density]
+ * joint [type] [body a] [pos a] [rot a] [body b] [pos b] [rot b] [twist]
  * get [name]                returns [pos], [rot]
  * move [name] [pos] [rot]   for kinematic bodies
  * force [obj] [pos] [rot]   for dynamic bodies; **rot is x,y,z, not quaternion
  * list [type]               types: dynamic kinematic
+ *
+ * addvertex [pos] [norm]    add a point to the convex hull
  */
 
 using namespace boost;
@@ -107,6 +110,27 @@ int main(int argc, char** argv) {
             dynamicsWorld->addRigidBody(obj->body);
             result = "ok";
         }
+        else if (args[0] == "joint") {
+            std::string& type(args[1]);
+
+            std::string& bodya(args[2]);
+            temp = StringToVector(args[3]);
+            btVector3 posa(temp[0], temp[1], temp[2]);
+            temp = StringToVector(args[4]);
+            btQuaternion quata(temp[0], temp[1], temp[2], temp[3]);
+
+            std::string& bodyb(args[5]);
+            temp = StringToVector(args[6]);
+            btVector3 posb(temp[0], temp[1], temp[2]);
+            temp = StringToVector(args[7]);
+            btQuaternion quatb(temp[0], temp[1], temp[2], temp[3]);
+
+            float twist = toFloat(args[8]);
+
+            btTypedConstraint *joint = createJoint(type, bodya, posa, quata, bodyb, posb, quatb, twist);
+            dynamicsWorld->addConstraint(joint, true);
+            result = "ok";
+        }
         else if (args[0] == "get") {
             result = "ok "+getObjectTransform(args[1]);
         }
@@ -137,11 +161,20 @@ int main(int argc, char** argv) {
         }
         else if (args[0] == "step") {
             float dt = toFloat(args[1]);
-            dynamicsWorld->stepSimulation(dt, 100, 1.0/100.0);
+            dynamicsWorld->stepSimulation(dt, 120, 1.0/120.0);
             result = "ok";
             elapsed_time += dt;
 
             std::cout << "Elapsed time: " << elapsed_time << std::endl;
+        }
+        else if (args[0] == "hullvertex") {
+            temp = StringToVector(args[1]);
+            btVector3 pos(temp[0], temp[1], temp[2]);
+            temp = StringToVector(args[2]);
+            btVector3 norm(temp[0], temp[1], temp[2]);
+
+            addHullVertex(pos, norm);
+            result = "ok";
         }
         else if (args[0] == "reset") {
             delete dynamicsWorld;

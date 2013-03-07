@@ -23,8 +23,14 @@ struct Object
 //          [center of mass] [friction] [bounce] [density]
 Object *createObject(const std::string& name, const btVector3& pos,
         const btQuaternion& quat, bool isKinematic, const std::string& shape,
-        const btVector3 shapeSize, const btVector3& center, float friction,
+        const btVector3& shapeSize, const btVector3& center, float friction,
         float bounce, float density);
+
+// joint [type] [body a] [pos a] [rot a] [body b] [pos b] [rot b] [twist]
+btTypedConstraint *createJoint(const std::string& type,
+        const std::string& bodya, const btVector3& posa, const btQuaternion& quata,
+        const std::string& bodyb, const btVector3& posb, const btQuaternion& quatb,
+        float twist);
 
 // get [name]                returns [pos], [rot]
 std::string getObjectTransform(const std::string& name);
@@ -39,6 +45,8 @@ void forceObject(const std::string& name, const btVector3& pos,
 
 // list [type]               types: dynamic kinematic
 std::string listObjects(const std::string& type);
+
+void addHullVertex(const btVector3& pos, const btVector3& norm);
 
 Object *getObject(const std::string& name);
 std::vector<Object *> getAllObjects();

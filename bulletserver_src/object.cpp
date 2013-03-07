@@ -4,6 +4,8 @@
 #include <cmath>
 #include <boost/lexical_cast.hpp>
 #include <boost/unordered_map.hpp>
+#include <LinearMath/btGeometryUtil.h>
+#include <BulletCollision/CollisionShapes/btShapeHull.h>
 
 #define PI 3.14159265358979323846
 
@@ -43,8 +45,15 @@ std::vector<float> StringToVector(const std::string& str)
     return ret;
 }
 
+///////////////////////////////////////////////////////////////////////
+
+std::vector<btVector3> hull;
 typedef boost::unordered_map<std::string, Object *> ObjectMap;
 ObjectMap objects;
+
+typedef std::pair<std::string, std::string> strpair;
+typedef boost::unordered_map<strpair, btTypedConstraint *> JointMap;
+JointMap joints;
 
 bool getKinematic(const Object *obj)
 {
@@ -55,28 +64,52 @@ bool getKinematic(const Object *obj)
 //          [center of mass] [friction] [bounce] [density]
 Object *createObject(const std::string& name, const btVector3& pos,
         const btQuaternion& quat, bool isKinematic, const std::string& shape,
-        const btVector3 shapeSize, const btVector3& center, float friction,
+        const btVector3& shapeSize, const btVector3& center, float friction,
         float bounce, float density)
 {
+    std::cout << "Adding object " << name << std::endl;
+    std::cout.flush();
+
     //create the object
     Object *obj = new Object;
 
     //create a shape
     btScalar mass;
-    if (shape == "sphere") {
+    if (shape == "hull") {
+        //make a "complete" hull shape
+        btConvexHullShape *temp = new btConvexHullShape();
+        std::vector<btVector3>::iterator iter;
+        for (iter=hull.begin(); iter!=hull.end(); iter++) {
+            temp->addPoint(*iter);
+        }
+        hull.clear();
+
+        //simplify it
+        btShapeHull *simplified = new btShapeHull(temp);
+        simplified->buildHull(0.04f);
+        delete temp;
+
+        //then build the simplified hull
+        obj->shape = new btConvexHullShape((btScalar *)simplified->getVertexPointer(), simplified->numVertices());
+        delete simplified;
+    }
+    else if (shape == "sphere") {
         //in practice, if "sphere" is selected in SFM, the client should send
         //a vector <radius, 0, 0>
         btScalar radius = std::max(shapeSize.x(),std::max(shapeSize.y(), shapeSize.z()));
         obj->shape = new btSphereShape(radius);
-        mass = density * (4.0/3.0) * PI * radius*radius*radius;
     }
     else { //default is "box"
         obj->shape = new btBoxShape(shapeSize);
-        mass = density * shapeSize.x() * shapeSize.y() * shapeSize.z();
     }
 
     if (isKinematic) {
         mass = 0;
+    }
+    else {
+        float size = (shapeSize.x() + shapeSize.y() + shapeSize.z()) / 3.0f;
+        mass = 1.0f + std::sqrt(density * size);
+        std::cout << "Mass = " << mass << std::endl;
     }
 
     //create a motion state
@@ -90,20 +123,57 @@ Object *createObject(const std::string& name, const btVector3& pos,
     //create a body and set properties
     obj->body = new btRigidBody(fallRigidBodyCI);
 
-
     if (isKinematic) {
         obj->body->setCollisionFlags(obj->body->getCollisionFlags() |
                 btCollisionObject::CF_KINEMATIC_OBJECT);
-        obj->body->setActivationState(DISABLE_DEACTIVATION);
     }
+
+    obj->body->setActivationState(DISABLE_DEACTIVATION);
 
     obj->body->setRestitution(bounce);
     obj->body->setFriction(friction * 100);
     obj->body->setCenterOfMassTransform(btTransform(quat, pos + center));
+    obj->body->setDamping(0.3, 0.6);
 
     //add to store and return
     ObjectMap::iterator iter = objects.insert(std::make_pair(name, obj)).first;
+
     return iter->second;
+}
+
+// joint [type] [body a] [pos a] [rot a] [body b] [pos b] [rot b] [twist]
+btTypedConstraint *createJoint(const std::string& type,
+        const std::string& bodya, const btVector3& posa, const btQuaternion& quata,
+        const std::string& bodyb, const btVector3& posb, const btQuaternion& quatb,
+        float twist)
+{
+    if (type == "point") {
+        Object *obja = getObject(bodya);
+        Object *objb = getObject(bodyb);
+
+        btPoint2PointConstraint *pjoint = new btPoint2PointConstraint(
+                *(obja->body), *(objb->body), posa, posb);
+
+        joints.insert(std::make_pair(strpair(bodya, bodyb), pjoint));
+
+        return pjoint;
+    }
+
+    if (type == "cone") {
+        Object *obja = getObject(bodya);
+        Object *objb = getObject(bodyb);
+
+        btTransform transa(quata, posa);
+        btTransform transb(quatb, posb);
+
+        btConeTwistConstraint *pjoint = new btConeTwistConstraint(
+                *(obja->body), *(objb->body), transa, transb);
+        pjoint->setLimit(PI/2.0, PI/2.0, twist);
+
+        return pjoint;
+    }
+
+    return NULL;
 }
 
 // get [name]                returns [pos], [rot]
@@ -180,6 +250,14 @@ std::string listObjects(const std::string& type)
     return ret;
 }
 
+void addHullVertex(const btVector3& pos, const btVector3& norm)
+{
+    //bullet adds a margin around objects so we need to shrink out object
+    //but calculating normals can be expensive at runtime
+    //so instead we ask for a normal and use that
+    hull.push_back(pos - norm*0.04f);
+}
+
 Object *getObject(const std::string& name)
 {
     ObjectMap::iterator iter = objects.find(name);
@@ -201,6 +279,15 @@ void destroyObject(const std::string& name)
         delete iter->second;
         objects.erase(iter);
     }
+
+    JointMap::iterator jiter;
+    for (jiter=joints.begin(); jiter!=joints.end(); jiter++) {
+        const strpair& key(jiter->first);
+        if (key.first == name || key.second == name) {
+            delete jiter->second;
+            joints.erase(jiter);
+        }
+    }
 }
 
 void destroyAllObjects()
@@ -212,6 +299,12 @@ void destroyAllObjects()
         delete iter->second->shape;
         delete iter->second;
     }
-
     objects.clear();
+
+    //does deleting the world automatically remove joints?
+    /*JointMap::iterator jiter;
+    for (jiter=joints.begin(); jiter!=joints.end(); jiter++) {
+        delete iter->second;
+    }*/
+    joints.clear();
 }
