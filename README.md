@@ -43,6 +43,7 @@ If you are updating to this version from a previous version, try to remove the f
 * Animation with ragdolls is difficult since you have to use the physics handles. I'll add an option to use the model's normal bones for fully-kinematic objects in the future.
 * Ropes use the positions of bones at the start of the time selection to determine how joints should line up. So for the best results, leave the model in its default position (ie, t-pose for ragdolls, straight line for ropes) and then animate any kinematic bones into position before the scene starts and give the sim a second to stabilize.
 * You *need* a .physics.txt file to create cloth bodies. An example cloth model is included in the /usermod/models/narry/ folder. Another file, windrunner_cape.physics.txt is also included as an example of rigging a cloth model from DOTA 2. The "width" and "height" parameters are self-explanatory; the "boneformat" parameter is described in more detail at http://docs.python.org/2/library/string.html#format-examples. The script iterates each variable {0}, {1}, ..., {n} over the ranges provided in "formatranges" and creates a bone for each. The order of iteration is to increment {0} first, then {1}, etc. The cloth is assumed to always be a 2D plane with dimensions defined by the "width" and "height" parameters regardless of how many variables are in the "boneformat" string.
+
 ### Videos
 Day 1 http://www.youtube.com/watch?v=LDMB95El9GA  
 Day 2 http://www.youtube.com/watch?v=a99sJrXWOxo  
