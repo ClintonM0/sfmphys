@@ -1,0 +1,16 @@
+{
+  "cloths": [
+    {
+      "width": 3,
+      "height": 3,
+      "boneformat": "cape_R{0}C{1}",
+      "formatranges": [
+        [0, 2],
+        [0, 2]
+      ],
+      "stretch": 0,
+      "shear": 0.6,
+      "bend": 0.9
+    }
+  ]
+}
