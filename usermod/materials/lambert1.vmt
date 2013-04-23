@@ -1,5 +1,5 @@
 "vertexlitgeneric"
 {
-	"$basetexture" "floor_tileblue01"
+	"$basetexture" "lambert"
 	$nocull 1
 }
