@@ -44,11 +44,11 @@ Day 2 http://www.youtube.com/watch?v=a99sJrXWOxo
 Day 3 http://www.youtube.com/watch?v=GtQ50YWORcA  
 Day 5 http://www.youtube.com/watch?v=vyzgnJhkdeQ  
 Day 5.5 http://www.youtube.com/watch?v=AyKmftF3ZX0  
-Day whatever: http://www.youtube.com/watch?v=-GgTciTTUs8
-Day whatever + 1: http://www.youtube.com/watch?v=6ELrKtixYog
-Day cloth: http://www.youtube.com/watch?v=zY2TTc0GKh4
-Day cloth2: http://www.youtube.com/watch?v=uy2ICpS0znw
-Cloth Parameters Reference: http://www.youtube.com/watch?v=AxK6saPpbW8
+Day whatever: http://www.youtube.com/watch?v=-GgTciTTUs8  
+Day whatever + 1: http://www.youtube.com/watch?v=6ELrKtixYog  
+Day cloth: http://www.youtube.com/watch?v=zY2TTc0GKh4  
+Day cloth2: http://www.youtube.com/watch?v=uy2ICpS0znw  
+Cloth Parameters Reference: http://www.youtube.com/watch?v=AxK6saPpbW8  
 
 This project uses the bullet physics library. Check out http://bulletphysics.org for more info.
 The included python bindings for bullet are based on https://github.com/ousttrue/swigbullet
