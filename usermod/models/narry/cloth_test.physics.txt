@@ -1,0 +1,15 @@
+{
+  "cloths": [
+    {
+      "width": 14,
+      "height": 14,
+      "boneformat": "rc_R0C{0}",
+      "formatranges": [
+        [1, 196]
+      ],
+      "stretch": 0,
+      "shear": 0.6,
+      "bend": 0.9
+    }
+  ]
+}

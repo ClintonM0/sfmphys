@@ -1,132 +1,183 @@
-# Echo client program
-import socket
 import sys
 import vs
 import sfmUtils
-#import bernt_utils
-#bernt_utils = reload(bernt_utils)
-#import bernt_conversion
-#bernt_conversion = reload(bernt_conversion)
+import Tkinter
 
-from bernt_utils import *
-from bernt_tcpconnect import *
-from bernt_conversion import *
+import sfmphys.dagutils
+sfmphys.dagutils = reload(sfmphys.dagutils)
+import sfmphys.sessionutils
+sfmphys.sessionutils = reload(sfmphys.sessionutils)
+import sfmphys.rigutils
+sfmphys.rigutils = reload(sfmphys.rigutils)
+import sfmphys.bullet_utils
+sfmphys.bullet_utils = reload(sfmphys.bullet_utils)
+
+from sfmphys.dagutils import *
+from sfmphys.rigutils import *
+from sfmphys.sessionutils import *
+from sfmphys.bullet_utils import *
 
 #get info about the shot
 timeSelection = GetCurrentTimeSelection()
 
 #check for "infinite"
-if (timeSelection["hold_left"] < -50000.0 or timeSelection["hold_right"] > 50000.0):
+if (timeSelection.IsEitherInfinite()):
 	raise Exception("phys_simulate.py: Please select a finite time range.")
 
-time = vs.DmeTime_t(timeSelection["hold_left"])
+time = timeSelection.GetValue("hold_left")
 dt = vs.DmeTime_t(1.0 / GetFrameRate())
 
+#create a physics world
+world = World()
+
 #see which animsets have phys rigs applied and grab the relevant info
-kinematicProps = []
-dynamicProps = []
+rigidBodies = {}
+softBodies = []
+constraints = []
 
-animationSets = GetAnimationSets()
-
-for animSet in animationSets:
+for animSet in GetAnimationSets():
 	root_group = animSet.GetRootControlGroup()
 	
-	#check if the phys rig is present
-	if (root_group.HasChildGroup("Physics", False)):
-		phys_group = root_group.FindChildByName("Physics", False)
+	if root_group.HasChildGroup("Rigidbodies", False):
+		phys_group = root_group.FindChildByName("Rigidbodies", False)
 
-		bodies = phys_group.GetValue("children")
+		for group in phys_group.GetValue("children"):
+			bodyrig = RigidbodyRig(group=group, time=time)
+			bodyrig.body = Rigidbody(bodyrig)
+			world.addRigidBody(bodyrig.body)
+			rigidBodies[animSet.GetName()+":"+bodyrig.target] = bodyrig
+		#end
+	#end
 
-		for body in bodies:
-			phys = PhysProperties(body, time)
-			if (phys.kinematic == 1):
-				kinematicProps.append(phys)
-			else:
-				dynamicProps.append(phys)
+	if root_group.HasChildGroup("PhysConstraints", False):
+		phys_group = root_group.FindChildByName("PhysConstraints", False)
+
+		for group in phys_group.GetValue("children"):
+			consrig = ConstraintRig(group=group, time=time)
+			bodya = rigidBodies[animSet.GetName()+":"+consrig.bodya].body
+			bodyb = rigidBodies[animSet.GetName()+":"+consrig.bodyb].body
+			consrig.cons = Constraint(consrig, bodya, bodyb)
+			world.addConstraint(consrig.cons)
+			constraints.append(consrig)
+		#end
+	#end
+
+	if root_group.HasChildGroup("Softbodies", False):
+		phys_group = root_group.FindChildByName("Softbodies", False)
+
+		for group in phys_group.GetValue("children"):
+			softrig = SoftbodyRig(group=group, time=time)
+			softrig.body = Softbody(softrig, world.getWorldInfo())
+			world.addSoftBody(softrig.body)
+			softBodies.append(softrig)
 		#end
 	#end
 #end
 
-if (len(kinematicProps) == 0 and len(dynamicProps) == 0):
+if (len(rigidBodies) == 0 and len(softBodies) == 0):
 	raise Exception("phys_simulate.py: No animation sets with a rig_physics found.")
 
-#open a connection
-s = connect(False, 52600)
-request(s, "reset")
+#do the simulation over this time period
+t_left = timeSelection.GetValue("hold_left").GetSeconds()
+t_right = timeSelection.GetValue("hold_right").GetSeconds()
+nframes = (t_right - t_left) / dt.GetSeconds()
 
-#add all of our phys props
-for p in kinematicProps+dynamicProps:
-	trans = GetAbsTransformAtTime(p.handle, time)
-	pos, quat = TransformToPosQuat(trans)
-	# add [name] [pos] [rot] [kinematic] [shape] [shape size] [center of mass] [friction] [bounce] [density]
-	request(s, "add "+p.name+" "+VectorToString(pos)+" "+QuaternionToString(quat)+" "+
-			str(p.kinematic)+" "+p.shape+" "+VectorToString(p.boxsize)+" "+
-			VectorToString(p.centerofmass)+" "+str(p.friction)+" "+str(p.bounce)+" "+str(p.density))
+#create a window for a progress bar
+class App(Tkinter.Tk):
+	def __init__(self):
+		sys.argc=1
+		sys.argv=["sfm.exe"]
+
+		Tkinter.Tk.__init__(self)
+		self.geometry("200x50")
+		self.title("Phys Progress")
+
+		self.canvas = Tkinter.Canvas(self, width=200, height=50)
+		self.rect = self.canvas.create_rectangle(0, 0, 0, 50, fill="#7C8DC9")
+		self.label = self.canvas.create_text(100, 25, text="")
+		self.canvas.pack()
+	#end
 #end
 
-#look for joints
+app = App()
 
-for p in kinematicProps+dynamicProps:
-	parentname = p.parentname
-	
-	#HAX here to make the biped fully connected
-	#there are bones in between (collar_L/R and neck) that don't have hitboxes
-	#there's probably a better way to do this (ie, walk the bone tree)
-	if p.name.find("bip_upperArm_R") != -1:
-		parentname = p.animset + ":bip_spine_3"
-	if p.name.find("bip_upperArm_L") != -1:
-		parentname = p.animset + ":bip_spine_3"
-	if p.name.find("bip_head") != -1:
-		parentname = p.animset + ":bip_spine_3"
-		
-	#sys.stderr.write("Looking for joint: "+parentname+" -> "+p["name"]+"\n")
-	
-	for q in kinematicProps+dynamicProps:
-		#sys.stderr.write("    "+q["name"]+" "+parentname+"\n")
-		if q.name == parentname: #q is the parent of p
-			trans_q = GetRelativeTransformAtTime(q.handle, p.dag, time)
-			trans_p = GetRelativeTransformAtTime(p.handle, p.dag, time)
-			pos_q, quat_q = TransformToPosQuat(trans_q)
-			pos_p, quat_p = TransformToPosQuat(trans_p)
+currentFrame = 0
+def doFrame():
+	global currentFrame, time, nframes
+	global rigidBodies, softBodies
+	global world
+	global app
 
-			#joint [type] [body a] [pos a] [rot a] [body b] [pos b] [rot b] [twist]
-			request(s, "joint cone "+
-					q.name+" "+VectorToString(pos_q)+" "+QuaternionToString(quat_q)+" "+
-					p.name+" "+VectorToString(pos_p)+" "+QuaternionToString(quat_p)+" "+
-					str(p.twist))
-			break
+	if currentFrame >= nframes:
+		app.destroy()
+		return
+	#end
+
+	progress = float(currentFrame)/float(nframes)
+
+	app.canvas.coords(app.rect, 0,0,200*progress,50)
+	app.canvas.itemconfigure(app.label, text=str(int(100*progress))+"/100")
+
+	#move objects
+	for key, b in rigidBodies.iteritems():
+		if b.mass == 0:
+			trans = GetAbsTransformAtTime(b.handle, time)
+			pos, quat = TransformToPosQuat(trans)
+			b.body.setTransform(pos, quat)
+		else:
+			trans = GetTransformAtTime(b.force, time) #LOCAL transform
+			pos, rot = TransformToPosEuler(trans)
+			b.body.addForce(pos, rot)
 		#end
 	#end
-#end
 
-#for every frame in the time selection
-nframes = (timeSelection["hold_right"] - timeSelection["hold_left"]) / dt.GetSeconds()
-for i in range(nframes):
-	#move kinematic objects
-	for p in kinematicProps:
-		#move [name] [pos] [rot]
-		trans = GetAbsTransformAtTime(p.handle, time)
-		pos, quat = TransformToPosQuat(trans)
-		request(s, "move "+p.name+" "+VectorToString(pos)+" "+QuaternionToString(quat))
+	for b in softBodies:
+		for i in range(len(b.nodelist)):
+			node = b.nodelist[i]
+			dag = b.daglist[i]
+			if node[1] == 0:
+				trans = GetAbsTransformAtTime(dag, time)
+				pos, quat = TransformToPosQuat(trans)
+				b.body.setPosition(i, pos)
+			#end
+		#end
 	#end
-	#apply forces to, and grab positions of, dynamic objects
-	for p in dynamicProps:
-		#force [name] [pos] [rot]
-		trans = GetTransformAtTime(p.force, time) #LOCAL transform
-		pos, rot = TransformToPosEuler(trans)
-		request(s, "force "+p.name+" "+VectorToString(pos)+" "+VectorToString(rot))
-		
-		#get [name]
-		response = request(s, "get "+p.name).split(' ') #returns ["ok", pos, quat]
-		trans = PosQuatToTransform(StringToVector(response[1]), StringToQuaternion(response[2]))
-		SetAbsTransformAtTime(p.handle, time, trans)
+
+	#update the simulation
+	world.stepWorld(dt.GetSeconds())
+
+	#grab new positions of dynamic objects
+	for key, b in rigidBodies.iteritems():
+		if (b.mass != 0):
+			pos, quat = b.body.getTransform()
+			trans = PosQuatToTransform(pos, quat)
+			SetAbsTransformAtTime(b.handle, time, trans)
+		#end
+	#end
+
+	for b in softBodies:
+		for i in range(len(b.nodelist)):
+			node = b.nodelist[i]
+			dag = b.daglist[i]
+			if node[1] != 0:
+				oldtrans = GetAbsTransformAtTime(dag, time)
+				oldpos, oldquat = TransformToPosQuat(oldtrans)
+				newtrans = PosQuatToTransform(b.body.getPosition(i), oldquat)
+				SetAbsTransformAtTime(dag, time, newtrans)
+			#end
+		#end
 	#end
 	
-	#advance the simulation
 	time += dt
-	request(s, "step "+str(dt.GetSeconds()))
+	currentFrame+=1
+	app.after(1, doFrame)
 #end
 
-#tell the server we're done
-s.send("end")
-s.close()
+app.after(250, doFrame)
+app.mainloop()
+
+sys.stderr.write("phys_simulate.py: cleaning up\n")
+world.destroy()
+del rigidBodies
+del softBodies
+del constraints
