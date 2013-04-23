@@ -39,10 +39,13 @@ If you are updating to this version from a previous version, try to remove the f
 * Once the scene is set up, right-click any animation set and run "phys_simulate". The simulation might take a few seconds.
 * To run a simulation again, just run "phys_simulate" again. There's no need to re-rig objects or to restart the server (the sim is reset automatically every time "phys_simulate" runs).
 
-### Some notes on ragdolls etc.
+### Some notes on ragdolls
 * Animation with ragdolls is difficult since you have to use the physics handles. I'll add an option to use the model's normal bones for fully-kinematic objects in the future.
 * Ropes use the positions of bones at the start of the time selection to determine how joints should line up. So for the best results, leave the model in its default position (ie, t-pose for ragdolls, straight line for ropes) and then animate any kinematic bones into position before the scene starts and give the sim a second to stabilize.
+
+### Some notes on cloth
 * You *need* a .physics.txt file to create cloth bodies. An example cloth model is included in the /usermod/models/narry/ folder. Another file, windrunner_cape.physics.txt is also included as an example of rigging a cloth model from DOTA 2. The "width" and "height" parameters are self-explanatory; the "boneformat" parameter is described in more detail at http://docs.python.org/2/library/string.html#format-examples. The script iterates each variable {0}, {1}, ..., {n} over the ranges provided in "formatranges" and creates a bone for each. The order of iteration is to increment {0} first, then {1}, etc. The cloth is assumed to always be a 2D plane with dimensions defined by the "width" and "height" parameters regardless of how many variables are in the "boneformat" string.
+* To make kinematic cloth, open the rigged animation set in the Element Viewer and navigate to "Root Control Group -> children -> SoftBodies -> children -> (cloth name)" and open the node list. From there you can edit the masses of nodes (use 1 for dynamic and 0 for kinematic). If you're feeling adventurous, feel free to poke around the other parts of the physics rigs in the element viewer. There are some parameters there that I either didn't or couldn't turn into sliders for the rig.
 
 ### Videos
 Day 1 http://www.youtube.com/watch?v=LDMB95El9GA  
