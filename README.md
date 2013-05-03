@@ -1,5 +1,3 @@
-If you are updating to this version from a previous version, try to remove the files from the previous version to avoid any conflicts; there aren't be any specific problems that I am aware of, but just to be sure.
-
 ### Changelog
 Update 2 May 2013
 
@@ -8,6 +6,7 @@ Update 2 May 2013
 
 Update 23 April 2013
 
+* If you are updating to this version from a previous version, try to remove the files from the previous version to avoid any conflicts; there aren't be any specific problems that I am aware of, but just to be sure.
 * bullet_server is no longer needed. Just run the scripts and go!
 * better automatic rigging for ragdolls, and more configurable joint constraints
 * soft-body physics, with an emphasis on cloth (and the possibility for some other limited applications)
