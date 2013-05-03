@@ -1,9 +1,20 @@
 If you are updating to this version from a previous version, try to remove the files from the previous version to avoid any conflicts; there aren't be any specific problems that I am aware of, but just to be sure.
 
-### Changes since last update
+### Changelog
+Update 2 May 2013
+
+* Updated to Python 2.7 (for the May 1 SFM update)
+* Added a "mass" attribute for rigid and soft bodies, accessible through the *element viewer*. The default of 1 should serve well enough for most props, but for exceptionally large or small props (or if you want to simulate, say, something like a seesaw) it's now there for you to adjust. See also: large cloth needs extra mass to scale well, so if you're working with large cloth and things pass through or break entirely, consider adjusting the mass.
+
+Update 23 April 2013
+
 * bullet_server is no longer needed. Just run the scripts and go!
 * better automatic rigging for ragdolls, and more configurable joint constraints
 * soft-body physics, with an emphasis on cloth (and the possibility for some other limited applications)
+
+Older versions
+
+* Nyeh, I didn't have a changelog. And it's not all that interesting. Just pretend I started with the April 23 release if it makes any difference :P.
 
 #SFM Physics Scripts
 ### What does this do?
