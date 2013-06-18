@@ -36,7 +36,7 @@ Older versions
     * These will (hopefully) be in a later release
 
 ### How to install
-* Grab this repository with git, or download the .zip (the button with a cloud symbol near the top of the page)
+* Grab this repository with git, or download the .zip ("Download ZIP" button in the right margin)
 * Extract and copy the "platform" and "sdktools" folders to [steamapps]/common/SourceFilmmaker/game. Choose to merge folders.
 
 ### How to use
