@@ -1,4 +1,11 @@
 ### Changelog
+Update 13 August 2013
+
+* Updated to Python 2.7.5 (for the July 31 SFM update)
+* Updated all guis to use PySide qt bindings
+* Moved phys_simulate to the global scripts menu; it is no longer a "rig" script
+* Started work on some fancy GUI things -- not included in this update, just thought I'd mention.
+
 Update 2 May 2013
 
 * Updated to Python 2.7 (for the May 1 SFM update)

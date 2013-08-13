@@ -1,7 +1,11 @@
 import sys
+import time
 import vs
 import sfmUtils
-import Tkinter
+import sfmClipEditor
+
+from PySide import QtCore
+from PySide import QtGui
 
 import sfmphys.dagutils
 sfmphys.dagutils = reload(sfmphys.dagutils)
@@ -17,6 +21,11 @@ from sfmphys.rigutils import *
 from sfmphys.sessionutils import *
 from sfmphys.bullet_utils import *
 
+if len(sfmClipEditor.GetSelectedShots()) == 1:
+	setCurrentShot(sfmClipEditor.GetSelectedShots()[0])
+else:
+	raise Exception("phys_simulate.py: Please select exactly one shot.")
+
 #get info about the shot
 timeSelection = GetCurrentTimeSelection()
 
@@ -24,7 +33,7 @@ timeSelection = GetCurrentTimeSelection()
 if (timeSelection.IsEitherInfinite()):
 	raise Exception("phys_simulate.py: Please select a finite time range.")
 
-time = timeSelection.GetValue("hold_left")
+currenttime = timeSelection.GetValue("hold_left")
 dt = vs.DmeTime_t(1.0 / GetFrameRate())
 
 #create a physics world
@@ -42,7 +51,7 @@ for animSet in GetAnimationSets():
 		phys_group = root_group.FindChildByName("Rigidbodies", False)
 
 		for group in phys_group.GetValue("children"):
-			bodyrig = RigidbodyRig(group=group, time=time)
+			bodyrig = RigidbodyRig(group=group, time=currenttime)
 			bodyrig.body = Rigidbody(bodyrig)
 			world.addRigidBody(bodyrig.body)
 			rigidBodies[animSet.GetName()+":"+bodyrig.target] = bodyrig
@@ -53,7 +62,7 @@ for animSet in GetAnimationSets():
 		phys_group = root_group.FindChildByName("PhysConstraints", False)
 
 		for group in phys_group.GetValue("children"):
-			consrig = ConstraintRig(group=group, time=time)
+			consrig = ConstraintRig(group=group, time=currenttime)
 			bodya = rigidBodies[animSet.GetName()+":"+consrig.bodya].body
 			bodyb = rigidBodies[animSet.GetName()+":"+consrig.bodyb].body
 			consrig.cons = Constraint(consrig, bodya, bodyb)
@@ -66,7 +75,7 @@ for animSet in GetAnimationSets():
 		phys_group = root_group.FindChildByName("Softbodies", False)
 
 		for group in phys_group.GetValue("children"):
-			softrig = SoftbodyRig(group=group, time=time)
+			softrig = SoftbodyRig(group=group, time=currenttime)
 			softrig.body = Softbody(softrig, world.getWorldInfo())
 			world.addSoftBody(softrig.body)
 			softBodies.append(softrig)
@@ -83,49 +92,42 @@ t_right = timeSelection.GetValue("hold_right").GetSeconds()
 nframes = (t_right - t_left) / dt.GetSeconds()
 
 #create a window for a progress bar
-class App(Tkinter.Tk):
-	def __init__(self):
-		sys.argc=1
-		sys.argv=["sfm.exe"]
+app = QtGui.QApplication.instance()
+window = QtGui.QWidget()
+window.resize(500, 25)
+window.setWindowTitle('Simple')
 
-		Tkinter.Tk.__init__(self)
-		self.geometry("200x50")
-		self.title("Phys Progress")
+progressbar = QtGui.QProgressBar(window)
+progressbar.resize(500,25)
+progressbar.setMinimum(0)
+progressbar.setMaximum(nframes)
+progressbar.setValue(0)
 
-		self.canvas = Tkinter.Canvas(self, width=200, height=50)
-		self.rect = self.canvas.create_rectangle(0, 0, 0, 50, fill="#7C8DC9")
-		self.label = self.canvas.create_text(100, 25, text="")
-		self.canvas.pack()
-	#end
-#end
-
-app = App()
+window.show()
 
 currentFrame = 0
 def doFrame():
-	global currentFrame, time, nframes
+	global currentFrame, currenttime, nframes
 	global rigidBodies, softBodies
 	global world
-	global app
+	global window
+	global progressbar
 
 	if currentFrame >= nframes:
-		app.destroy()
-		return
+		window.close()
+		return 0
 	#end
 
-	progress = float(currentFrame)/float(nframes)
-
-	app.canvas.coords(app.rect, 0,0,200*progress,50)
-	app.canvas.itemconfigure(app.label, text=str(int(100*progress))+"/100")
+	progressbar.setValue(currentFrame)
 
 	#move objects
 	for key, b in rigidBodies.iteritems():
 		if b.mass == 0:
-			trans = GetAbsTransformAtTime(b.handle, time)
+			trans = GetAbsTransformAtTime(b.handle, currenttime)
 			pos, quat = TransformToPosQuat(trans)
 			b.body.setTransform(pos, quat)
 		else:
-			trans = GetTransformAtTime(b.force, time) #LOCAL transform
+			trans = GetTransformAtTime(b.force, currenttime) #LOCAL transform
 			pos, rot = TransformToPosEuler(trans)
 			b.body.addForce(pos, rot)
 		#end
@@ -136,7 +138,7 @@ def doFrame():
 			node = b.nodelist[i]
 			dag = b.daglist[i]
 			if node[1] == 0:
-				trans = GetAbsTransformAtTime(dag, time)
+				trans = GetAbsTransformAtTime(dag, currenttime)
 				pos, quat = TransformToPosQuat(trans)
 				b.body.setPosition(i, pos)
 			#end
@@ -151,7 +153,7 @@ def doFrame():
 		if (b.mass != 0):
 			pos, quat = b.body.getTransform()
 			trans = PosQuatToTransform(pos, quat)
-			SetAbsTransformAtTime(b.handle, time, trans)
+			SetAbsTransformAtTime(b.handle, currenttime, trans)
 		#end
 	#end
 
@@ -160,21 +162,24 @@ def doFrame():
 			node = b.nodelist[i]
 			dag = b.daglist[i]
 			if node[1] != 0:
-				oldtrans = GetAbsTransformAtTime(dag, time)
+				oldtrans = GetAbsTransformAtTime(dag, currenttime)
 				oldpos, oldquat = TransformToPosQuat(oldtrans)
 				newtrans = PosQuatToTransform(b.body.getPosition(i), oldquat)
-				SetAbsTransformAtTime(dag, time, newtrans)
+				SetAbsTransformAtTime(dag, currenttime, newtrans)
 			#end
 		#end
 	#end
 	
-	time += dt
+	currenttime += dt
 	currentFrame+=1
-	app.after(1, doFrame)
+
+	time.sleep(0)
+
+	return 1
 #end
 
-app.after(250, doFrame)
-app.mainloop()
+while (doFrame()):
+	pass
 
 sys.stderr.write("phys_simulate.py: cleaning up\n")
 world.destroy()
