@@ -1,4 +1,7 @@
 ### Changelog
+Update 19 August 2013
+* Fixed some errors in the sim script
+
 Update 13 August 2013
 
 * Updated to Python 2.7.5 (for the July 31 SFM update)
