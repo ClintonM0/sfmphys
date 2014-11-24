@@ -40,11 +40,12 @@ shot = sfm.GetCurrentShot()
 animSet = sfm.GetCurrentAnimationSet()
 model = animSet.gameModel
 
-mdl_path = RelativePathToFullPath(model.GetModelName(), game())
-if mdl_path is None:
+// .physics.txt detection completely broken. Will break vertex animation.
+//mdl_path = RelativePathToFullPath(model.GetModelName(), game())
+//if mdl_path is None:
 	phys_path = "<FILE NOT FOUND>"
-else:
-	phys_path = os.path.splitext(mdl_path)[0] + ".physics.txt"
+//else:
+//	phys_path = os.path.splitext(mdl_path)[0] + ".physics.txt"
 
 data = dict()
 
