@@ -40,7 +40,7 @@ shot = sfm.GetCurrentShot()
 animSet = sfm.GetCurrentAnimationSet()
 model = animSet.gameModel
 
-mdl_path = RelativePathToFullPath(model.GetModelName(), game())
+mdl_path = valve.RelativePathToFullPath(model.GetModelName(), valve.game())
 if mdl_path is None:
 	phys_path = "<FILE NOT FOUND>"
 else:
