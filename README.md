@@ -56,7 +56,8 @@ Older versions
 * The "center of mass" control currently does not function properly, and the "force" control will need some tweaking to be more useful (note that you can also rotate the "force" control to apply torque to an object).
 * The "damping" controls determine how quickly objects lose momentum over time. If objects are shaking uncontrollably, try increasing the damping; if they are moving too slowly, try decreasing. The defaults are generally fine for rigidbodies; you may want to increase for ragdolls, and cloth physics will require tweaking on an individual basis.
 * Select a period of time to simulate over in the motion editor (ie, with the floating modification layer). The simulation will not run if the time selection is infinite in either direction.
-* Once the scene is set up, go to "Scripts" in the main menu bar and select "Run sfmphys Simulation"
+* Once the scene is set up, right-click any animation set and run "Run sfmphys Simulation". The simulation might take a few seconds. If SFM doesn't respond immediately just be patient.
+* To run a simulation again, just run "Run sfmphys Simulation" again. There's no need to re-rig objects (the sim is reset automatically every time "Run sfmphys Simulation" runs).
 
 ### Some notes on ragdolls
 * Animation with ragdolls is difficult since you have to use the physics handles. I'll add an option to use the model's normal bones for fully-kinematic objects in the future.
